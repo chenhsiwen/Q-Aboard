@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Q&A Board</title>
+    <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+      h1 {text-align: center;padding: 10px;}
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 65%; margin-right: .5%; }
+      form button { width: 9%; background: #AAE; border: none; padding: 10px; }
+
+
+      #name { width: 25%; border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+      .user { float:left; width: 25%; }
+      .question{ position: relative; left:0px;padding-right: 40px; }
+      .vote{position: absolute; left:75%;padding:2px;}
+      .but { float:right; border: 1px; text-align: center;border: 1px solid #FFF;padding:0 2px 0 2px}
+      .title { padding: 5px 10px; }
+      .id{display: none;}
+  
+  
+    </style>
+  </head>
+  <body>
+      <h1>Q&A Board</h1>
+      <div class="title"><span class="user">username</span><span class="question">question</span><span class="vote">vote</span></div>
+    <ul id="messages"></ul>
+
+    <form action="">
+      <span ><input type="text" id="name" placeholder=username><input id="m" autocomplete="off" placeholder=question><button>Send</button></span>
+    </form>
+       
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      var tmpl='<li><span class="user"></span><span class="id"></span></span><span class="question"></span></span><span class="vote"></span><button class="but">vote</button></li>'
+      var voteArr={N:"", Q:"", ID:0, vote:0};
+      var postArr;
+      var questionArr=[];
+      var socket = io();
+      $('form').submit(function(){
+        if ( $('#name').val()!==""&& $('#m').val()!=="")
+        {
+          socket.emit('username', $('#name').val());
+          socket.emit('question message', $('#m').val());
+        }     
+        $('#m').val('');
+        return false;
+      });
+    
+      var question,name,vote;
+      socket.on('send', function(msg){
+        console.log(msg);
+        questionArr=msg
+        for(var i=0;i<questionArr.length;i++)
+        {
+          $('#messages li').last().remove();
+        }
+        for(var i=0;i<questionArr.length;i++)
+        {
+          $('#messages').append($(tmpl));
+          $('#messages li').last().find('.user').text(questionArr[i].N);
+          $('#messages li').last().find('.vote').text(questionArr[i].vote);
+          $('#messages li').last().find('.question').text(questionArr[i].Q);
+          $('#messages li').last().find('.id').text(questionArr[i].ID);
+        }
+
+        $( '.but' ).on('click', function() {
+            console.log("do");
+            voteArr.N=$(this).parent('li').find(".user").text(),
+            voteArr.Q=$(this).parent('li').find(".question").text(),
+            voteArr.vote=$(this).parent('li').find(".vote").text();
+            voteArr.ID=$(this).parent('li').find(".id").text();
+            voteArr.vote++;
+            $(this).parent('li').find(".vote").text(voteArr.vote);
+            console.log(voteArr.vote);
+            socket.emit('vote', voteArr);
+        });
+      });
+      socket.on('vote', function(msg){
+        questionArr=msg;
+        for(var i=0;i<questionArr.length;i++)
+        {
+          $('#messages li').last().remove();
+        }
+        for(var i=0;i<questionArr.length;i++)
+        {
+          $('#messages').append($(tmpl));
+          $('#messages li').last().find('.user').text(questionArr[i].N);
+          $('#messages li').last().find('.vote').text(questionArr[i].vote);
+          $('#messages li').last().find('.question').text(questionArr[i].Q);
+          $('#messages li').last().find('.id').text(questionArr[i].ID);
+        }
+        
+      });
+
+     
+    </script>
+  </body>
+</html>
